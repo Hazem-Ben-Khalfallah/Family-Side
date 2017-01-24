@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Family side</string>
+    <string name="title_activity_maps">Family Side</string>
+    <string name="gps_network_not_enabled">GPS not enabled</string>
+    <string name="open_location_settings">Open location settings</string>
+    <string name="cancel">Cancel</string>
+</resources>
