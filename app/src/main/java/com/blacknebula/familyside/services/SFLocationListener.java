@@ -6,9 +6,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.blacknebula.familyside.FamilySideApplication;
+import com.blacknebula.familyside.util.Logger;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,20 +16,17 @@ import java.util.Locale;
 
 import static android.content.ContentValues.TAG;
 
-public class MyLocationListener implements LocationListener {
+public class SFLocationListener implements LocationListener {
 
     private LocationChangeCallback locationChangeCallback;
 
-    public MyLocationListener(LocationChangeCallback locationChangeCallback) {
+    public SFLocationListener(LocationChangeCallback locationChangeCallback) {
         this.locationChangeCallback = locationChangeCallback;
     }
 
     @Override
     public void onLocationChanged(Location loc) {
-        Toast.makeText(
-                FamilySideApplication.getAppContext(),
-                "Location changed: Lat: " + loc.getLatitude() + " Lng: "
-                        + loc.getLongitude(), Toast.LENGTH_SHORT).show();
+        Logger.info(Logger.Type.FAMILY_SIDE, "Location changed: Lat: %s Lng: %s", loc.getLatitude(), loc.getLongitude());
         String longitude = "Longitude: " + loc.getLongitude();
         Log.v(TAG, longitude);
         String latitude = "Latitude: " + loc.getLatitude();
@@ -43,14 +40,11 @@ public class MyLocationListener implements LocationListener {
             addresses = gcd.getFromLocation(loc.getLatitude(),
                     loc.getLongitude(), 1);
             if (addresses.size() > 0) {
-                System.out.println(addresses.get(0).getLocality());
                 cityName = addresses.get(0).getLocality();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String s = longitude + "\n" + latitude + "\n\nMy Current City is: "
-                + cityName;
 
         locationChangeCallback.onLocationChange(loc.getLatitude(), loc.getLongitude());
     }
