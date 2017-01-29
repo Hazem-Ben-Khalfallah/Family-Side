@@ -1,4 +1,4 @@
-package com.blacknebula.familyside.services;
+package com.blacknebula.familyside.mobile.services;
 
 import android.location.Address;
 import android.location.Geocoder;
@@ -7,8 +7,8 @@ import android.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.blacknebula.familyside.FamilySideApplication;
-import com.blacknebula.familyside.util.Logger;
+import com.blacknebula.familyside.mobile.FamilySideApplication;
+import com.blacknebula.familyside.mobile.util.Logger;
 
 import java.io.IOException;
 import java.util.List;

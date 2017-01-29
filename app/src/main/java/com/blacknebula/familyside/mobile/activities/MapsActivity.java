@@ -1,4 +1,4 @@
-package com.blacknebula.familyside.activities;
+package com.blacknebula.familyside.mobile.activities;
 
 import android.Manifest;
 import android.content.Context;
@@ -16,9 +16,9 @@ import android.support.v4.app.FragmentActivity;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
-import com.blacknebula.familyside.R;
-import com.blacknebula.familyside.services.LocationChangeCallback;
-import com.blacknebula.familyside.services.SFLocationListener;
+import com.blacknebula.familyside.mobile.R;
+import com.blacknebula.familyside.mobile.services.LocationChangeCallback;
+import com.blacknebula.familyside.mobile.services.SFLocationListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -132,7 +132,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void addMarkerOnMap(double lat, double lang, String name) {
         LatLng position = new LatLng(lat, lang);
         marker = mMap.addMarker(new MarkerOptions().position(position).title(name));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
         //Move the camera to the user's location and zoom in!
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, MIN_ZOOM));
     }

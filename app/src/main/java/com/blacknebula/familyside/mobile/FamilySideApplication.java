@@ -1,4 +1,4 @@
-package com.blacknebula.familyside;
+package com.blacknebula.familyside.mobile;
 
 import android.app.Application;
 import android.content.Context;

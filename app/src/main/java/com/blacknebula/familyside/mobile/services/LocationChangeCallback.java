@@ -1,4 +1,4 @@
-package com.blacknebula.familyside.services;
+package com.blacknebula.familyside.mobile.services;
 
 /**
  * @author hazem

@@ -1,4 +1,4 @@
-package com.blacknebula.familyside.util;
+package com.blacknebula.familyside.mobile.util;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -10,7 +10,7 @@ import android.view.View;
 import android.widget.Toast;
 
 
-import com.blacknebula.familyside.R;
+import com.blacknebula.familyside.mobile.R;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

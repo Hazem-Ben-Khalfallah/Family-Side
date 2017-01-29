@@ -1,4 +1,4 @@
-package com.blacknebula.familyside.util;
+package com.blacknebula.familyside.mobile.util;
 
 import android.os.Handler;
 import android.os.Looper;

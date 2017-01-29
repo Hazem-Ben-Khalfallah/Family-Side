@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("familyside.blacknebula.com.familyside", appContext.getPackageName());
+        assertEquals("com.blacknebula.familyside", appContext.getPackageName());
     }
 }
