@@ -2,6 +2,7 @@ package com.blacknebula.familyside.mobile.activities;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.location.Location;
@@ -15,10 +16,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
-
 import com.blacknebula.familyside.mobile.R;
-import com.blacknebula.familyside.mobile.services.LocationChangeCallback;
-import com.blacknebula.familyside.mobile.services.SFLocationListener;
+import com.blacknebula.familyside.mobile.util.Logger;
+import com.blacknebula.familyside.mobile.util.ViewUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -33,7 +33,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private final int REQUEST_ACCESS_LOCATION_STATE = 1;
     private final float MIN_ZOOM = 15f;
     private final String CURRENT_USER_NAME = "You";
@@ -48,12 +48,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        // Create an instance of GoogleAPIClient.
 
+        // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -65,16 +66,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onStart() {
-        mGoogleApiClient.connect();
         super.onStart();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
     }
 
     @Override
     protected void onStop() {
-        mGoogleApiClient.disconnect();
         super.onStop();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
+        }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkGPS();
+    }
+
+    private boolean checkGPS() {
+        final LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        final boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if (!gpsEnabled) {
+            ViewUtils.openDialog(this, R.string.gps_network_not_enabled, R.string.open_location_settings, new ViewUtils.onClickListener() {
+                @Override
+                public void onPositiveClick() {
+                    startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                }
+
+                @Override
+                public void onNegativeClick() {
+                    checkGPS();
+                }
+
+                @Override
+                public void onCancel() {
+                    checkGPS();
+                }
+
+            });
+        }
+        return gpsEnabled;
+    }
 
     /**
      * Manipulates the map once available.
@@ -98,25 +133,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
-        final LocationListener locationListener = new SFLocationListener(new LocationChangeCallback() {
-            @Override
-            public void onLocationChange(double lat, double lang) {
-                // Add a marker in Sydney and move the camera
-                moveMarker(marker, new LatLng(lat, lang), false);
-            }
-        });
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 5, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
     }
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mLastLocation != null) {
             addMarkerOnMap(mLastLocation.getLatitude(), mLastLocation.getLongitude(), CURRENT_USER_NAME);
+        } else {
+            ViewUtils.showToast(this, "Move around to help your phone detect you position");
         }
+    }
+
+    private void addMarkerOnMap(double lat, double lang, String name) {
+        LatLng position = new LatLng(lat, lang);
+        marker = mMap.addMarker(new MarkerOptions().position(position).title(name));
+        //Move the camera to the user's location and zoom in!
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, MIN_ZOOM));
     }
 
     @Override
@@ -129,11 +167,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void addMarkerOnMap(double lat, double lang, String name) {
-        LatLng position = new LatLng(lat, lang);
-        marker = mMap.addMarker(new MarkerOptions().position(position).title(name));
-        //Move the camera to the user's location and zoom in!
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, MIN_ZOOM));
+    @Override
+    public void onLocationChanged(Location loc) {
+        Logger.info(Logger.Type.FAMILY_SIDE, "Location changed: Lat: %s Lng: %s", loc.getLatitude(), loc.getLongitude());
+        moveMarker(marker, new LatLng(loc.getLatitude(), loc.getLongitude()), false);
     }
 
     /**
@@ -143,13 +180,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * @param toPosition new position
      * @param hideMarker makes the marker invisible on the map
      */
-    public void moveMarker(final Marker marker, final LatLng toPosition, final boolean hideMarker) {
+    private void moveMarker(final Marker marker, final LatLng toPosition, final boolean hideMarker) {
         final Handler handler = new Handler();
         final long start = SystemClock.uptimeMillis();
         Projection proj = mMap.getProjection();
         Point startPoint = proj.toScreenLocation(marker.getPosition());
         final LatLng startLatLng = proj.fromScreenLocation(startPoint);
-        final long duration = 500;
+        final long duration = 500; //ms
 
         final Interpolator interpolator = new LinearInterpolator();
 
@@ -178,6 +215,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(toPosition));
             }
         });
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
     }
 
 }
