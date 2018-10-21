@@ -91,6 +91,12 @@ public class ViewUtils {
                     }
                 })
                 .setIcon(icon)
+                .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        onClickListener.onCancel();
+                    }
+                })
                 .show();
     }
 
@@ -98,5 +104,7 @@ public class ViewUtils {
         void onPositiveClick();
 
         void onNegativeClick();
+
+        void onCancel();
     }
 }
