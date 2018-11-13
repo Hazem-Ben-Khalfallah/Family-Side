@@ -156,13 +156,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation == null) {
-            Logger.info(Logger.Type.FAMILY_SIDE, "No last location found. Requesting current location");
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        } else {
+        if (mLastLocation != null) {
             Logger.info(Logger.Type.FAMILY_SIDE, String.format("Last location detected: Lat: %s Lng: %s", mLastLocation.getLatitude(), mLastLocation.getLongitude()));
             addMarkerOnMap(mLastLocation.getLatitude(), mLastLocation.getLongitude(), CURRENT_USER_NAME);
         }
+
+        Logger.info(Logger.Type.FAMILY_SIDE, "Requesting current location");
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
     }
 
     @Override
