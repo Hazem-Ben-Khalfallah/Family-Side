@@ -4,4 +4,10 @@
     <string name="gps_network_not_enabled">GPS not enabled</string>
     <string name="open_location_settings">Open location settings</string>
     <string name="cancel">Cancel</string>
+
+
+    <string name="action_settings">Settings</string>
+    <string name="drawer_open">Open</string>
+    <string name="drawer_close">Close</string>
+
 </resources>

@@ -1,6 +1,7 @@
-package com.blacknebula.familyside.mobile.activities;
+package com.blacknebula.familyside.mobile.fragments;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -11,8 +12,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import com.blacknebula.familyside.mobile.R;
@@ -20,8 +25,6 @@ import com.blacknebula.familyside.mobile.util.Logger;
 import com.blacknebula.familyside.mobile.util.ViewUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -34,32 +37,59 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+/**
+ * Created by Konstantin on 22.12.2014.
+ */
+public class MapsFragment extends Fragment implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+    public static final String MAPS = "Building";
     private static final int REQUEST_ACCESS_LOCATION_STATE = 1;
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private static final float MIN_ZOOM = 15f;
     private final String CURRENT_USER_NAME = "You";
-
+    protected int res;
+    private View containerView;
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private Marker marker;
     private LocationRequest mLocationRequest;
 
+    public static MapsFragment newInstance(int resId) {
+        MapsFragment contentFragment = new MapsFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt(Integer.class.getName(), resId);
+        contentFragment.setArguments(bundle);
+        return contentFragment;
+    }
+
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        this.containerView = view.findViewById(R.id.container);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+        res = getArguments().getInt(Integer.class.getName());
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_maps, container, false);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        SupportMapFragment mapFragment = (SupportMapFragment) this.getChildFragmentManager()
                 .findFragmentById(R.id.map);
+
+
         mapFragment.getMapAsync(this);
 
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
+            mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
@@ -71,10 +101,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(10 * 1000L)        // 10 seconds, in milliseconds
                 .setFastestInterval(1000L); // 1 second, in milliseconds
+        return rootView;
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
@@ -83,7 +114,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         checkGPS();
         if (mGoogleApiClient != null) {
@@ -92,10 +123,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private boolean checkGPS() {
-        final LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        final LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         final boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (!gpsEnabled) {
-            ViewUtils.openDialog(this, R.string.gps_network_not_enabled, R.string.open_location_settings, new ViewUtils.onClickListener() {
+            ViewUtils.openDialog(getActivity(), R.string.gps_network_not_enabled, R.string.open_location_settings, new ViewUtils.onClickListener() {
                 @Override
                 public void onPositiveClick() {
                     startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
@@ -148,9 +179,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnected(Bundle connectionHint) {
         Logger.info(Logger.Type.FAMILY_SIDE, "connection success *********");
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(),
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                     REQUEST_ACCESS_LOCATION_STATE);
             return;
@@ -159,6 +190,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mLastLocation != null) {
             Logger.info(Logger.Type.FAMILY_SIDE, String.format("Last location detected: Lat: %s Lng: %s", mLastLocation.getLatitude(), mLastLocation.getLongitude()));
             addMarkerOnMap(mLastLocation.getLatitude(), mLastLocation.getLongitude(), CURRENT_USER_NAME);
+        } else {
+            Logger.warn(Logger.Type.FAMILY_SIDE, "Last location not detected.");
         }
 
         Logger.info(Logger.Type.FAMILY_SIDE, "Requesting current location");
@@ -175,7 +208,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (connectionResult.hasResolution()) {
             try {
                 // Start an Activity that tries to resolve the error
-                connectionResult.startResolutionForResult(this, CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                connectionResult.startResolutionForResult(getActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
             } catch (IntentSender.SendIntentException e) {
                 e.printStackTrace();
             }
@@ -187,10 +220,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onLocationChanged(final Location loc) {
         if (marker == null) {
-            ViewUtils.showToast(this, "marker null");
+            Logger.info(Logger.Type.FAMILY_SIDE, "Add a new marker on map");
             addMarkerOnMap(loc.getLatitude(), loc.getLongitude(), CURRENT_USER_NAME);
         } else {
-            ViewUtils.showToast(this, "marker not null. moving it");
+            Logger.info(Logger.Type.FAMILY_SIDE, "Update position of marker");
             final LatLng toPosition = new LatLng(loc.getLatitude(), loc.getLongitude());
             final Handler handler = new Handler();
             final long start = SystemClock.uptimeMillis();
@@ -231,5 +264,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Move the camera to the user's location and zoom in!
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, MIN_ZOOM));
     }
+
 
 }
